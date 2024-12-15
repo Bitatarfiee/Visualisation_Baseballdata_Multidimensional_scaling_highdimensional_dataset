@@ -8,7 +8,7 @@ In this project
 - Produce series of scatterplots in which you plot the MDS variable that was the best in the differentiation between the leagues in step 2 against all other numerical variables of the data.
   Pick up two scatterplots that seem to show the strongest (positive or negative)
 ## Data
-The data set baseball-2016.xlsx contains information about the scores of baseball teams in USA in 2016, such as:\
+The data set baseball-2016.xlsx contains information about the scores of baseball teams in USA in 2016, such as:
 
 Games won, Games Lost, Runs peer game, At bats, Runs, Hits, Doubles, Triples, Home runs, Runs batted in, Bases stolen,
 Time caught stealing, Bases on Balls, Strikeouts, Hits/At Bats, On Base Percentage, Slugging percentage, On base+Slugging, Total bases, 
