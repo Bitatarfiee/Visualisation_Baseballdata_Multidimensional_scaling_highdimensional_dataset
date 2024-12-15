@@ -1,0 +1,146 @@
+---
+title: "Visualisation Multidimensional scaling of a high dimensional dataset"
+output: html_document
+date: "2024-12-15"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Multidimensional scaling of a high dimensional dataset
+We work with the data set baseball-2016 which contains information about the scores of baseball teams in USA in 2016.
+
+
+Firstly, loading the file to R. 
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+
+## Assignment2: Multidimensional scaling of a high-dimensional dataset
+library(tidyr)
+library(dplyr)
+library(readxl)
+library(plotly)
+library(MASS)
+
+# Part 1
+baseball = read_excel("baseball-2016.xlsx",)
+
+```
+
+### Scaling data
+
+Here we need scaling as we have variables with different units and  scales and we can see large difference between variables if we do not scale, the variable such as AB, can dominate the analysis.
+
+---
+
+In this part we performs a non-metric MDS with Minkowski distance=2 (set the method to "Minkowski", and p = 2) of the data (numerical columns) into two dimensions. Also, we visualized the resulting observations in Plotly as a scatter plot in which observations are colored by League.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+# Part 2
+baseball.numeric= scale(baseball[,3:28])
+d=dist(baseball.numeric, method = "minkowski", p=2)
+res=isoMDS(d,k=2)
+coords=res$points
+coordsMDS=as.data.frame(coords)
+coordsMDS$League=baseball$League
+coordsMDS$name=baseball$Team
+custom_colors <- c("red", "blue")
+plot_ly(coordsMDS, x=~V1, y=~V2, color= ~League,type = "scatter",hovertext=~name,colors = custom_colors, mode = "markers")
+
+```
+
+
+The plot does not indicate specific boundry between two leagues.\
+
+Based on the plot, it seems that V2 provides the best differention between leagues. For instance, if we consider decision boundry across y axis, AL(red points) can be seperatable. 
+
+#### Outliers Detection
+- Boston Red Sox
+- Colorado Rockies
+- Chicago Cubs
+- San Diego Padres
+- Milwaukee Brewers
+- Philadelphia Phillies
+
+---
+
+
+In this section we are using Plotly to create a Shepard plot for the MDS performed.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+sh <- Shepard(d, coords)
+delta <-as.numeric(d)
+D<- as.numeric(dist(coords))
+
+n=nrow(coords)
+index=matrix(1:n, nrow=n, ncol=n)
+index1=as.numeric(index[lower.tri(index)])
+
+n=nrow(coords)
+index=matrix(1:n, nrow=n, ncol=n, byrow = T)
+index2=as.numeric(index[lower.tri(index)])
+
+
+plot_ly()%>%
+  add_markers(x=~delta, y=~D, hoverinfo = 'text',
+              text = ~paste('Obj1: ', coordsMDS$name[index1],
+                            '<br> Obj 2: ', coordsMDS$name[index2]))%>%
+  #if nonmetric MDS inolved
+  add_lines(x=~sh$x, y=~sh$yf)
+
+
+```
+
+
+We know that if all points are on the diagonal of the Shepard plot, it indicates that the MDS solution accurately preserves the original distance. And the further away each observation is from the diagonal, the harder it is for MDS to map it.
+Large scatter around the line suggests that original dissimilarities
+are not well preserved in the reduced number of dimensions.
+
+#### Observation pairs were hard for the MDS to map successfully
+For the MDS, were hard to map successfully the following pairs:\
+- Minnesota Twins and Aizona Diamondbacks
+- Oakland Athletics and Milwaukee Brewers
+
+---
+
+
+Finally, We produce series of scatterplots in which we plot the MDS variable that was the best in the differentiation between the leagues in step 2 (due to our result, we selected "V2"), against all other numerical variables of the data. And, pick up two scatterplots that seem to show the strongest (positive or negative) connection between the variables.
+Based on the scatterplots, we think "HR" and "V2" has the strongest positive connection and "SH" and "V2" has the strongest negative connection. 
+So, you can see these two plots below:
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+Baseball_new<-as.data.frame(baseball[,3:28])
+Baseball_new$V2=coordsMDS$V2
+
+# The strongest positive connection
+p1 <- ggplot(Baseball_new)+aes(x=Baseball_new[,10],y=V2)+
+  geom_point(color = "darkblue")+
+  labs(x = colnames(Baseball_new)[10],y="V2", title ="Scatterplot:Strongest Positive Connection between Variables")
+p1
+
+# The strongest negative connection
+p2 <- ggplot(Baseball_new)+aes(x=Baseball_new[,23],y=V2)+
+  geom_point(color = "darkgreen")+
+  labs(x = colnames(Baseball_new)[23],y="V2", title ="Scatterplot:Strongest Negative Connection between Variables")
+p2
+
+```
+
+#### Do they appear to be important in scoring the baseball teams? 
+
+In baseball, a home run (abbreviated HR) is scored when the ball is hit in such a way that the batter is able to circle the bases and reach home plate safely in one play without any errors being committed by the defensive team.
+Home runs are among the most popular aspects of baseball and, as a result, prolific home run hitters are usually the most popular among fans and consequently the highest paid by teams.
+
+"SH" typically stands for "Sacrifice Hit". A sacrifice hit occurs when a batter intentionally bunts the ball in a way that advances one or more baserunners while allowing themselves to be tagged out. The primary purpose of a sacrifice hit is to advance runners to a better scoring position, often from first base to second base or from second base to third base. SH is a valuable tactic in scoring baseball because it helps teams advance runners into scoring position and create scoring opportunities, especially in critical game situations. It's a tool for manufacturing runs and putting pressure on the opposing defense, contributing to a team's overall offensive strategy. While not the primary method of scoring runs, SH plays a key role in achieving that objective, especially when runs are at a premium.
+
+#### Provide some interpretation for the chosen MDS variable.
+We chose V2 as we find that the teams in League AL tend to have higher values of "v2" compared to teams in the NL teams.
+
+
+### Apendix
+```{r eval=FALSE, echo=TRUE, message=FALSE, warning=FALSE, ref.label=knitr::all_labels()}
+```
